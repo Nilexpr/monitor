@@ -1,20 +1,24 @@
 import { Injectable } from '@nestjs/common';
-import { CgroupsService } from './cgroups/cgroups.service';
+import { fork } from 'child_process';
 
 @Injectable()
 export class AppService {
-  constructor(private cgroupsService: CgroupsService) {}
+  constructor() {}
   getHello(): string {
+    console.log('Hello from Browser');
     return 'Hello!';
   }
 
-  getBlock() {
-    const targetTime = Date.now() + 5000;
-    while (targetTime > Date.now()) {}
-    return 'Block!';
-  }
+  runCPU() {
+    const child = fork('./src/monitor/block.ts');
 
-  runChild() {
-    this.cgroupsService.run();
+    child.on('data', (data) => {
+      console.log('stdout', data.toString());
+    });
+
+    child.on('exit', (code) => {
+      console.log(`Task exited code ${code}`);
+    });
+    return child;
   }
 }
